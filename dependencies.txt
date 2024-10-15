@@ -1,0 +1,2 @@
+conda install reportlab
+conda install svglib

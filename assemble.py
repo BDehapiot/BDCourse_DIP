@@ -11,8 +11,6 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 #%% Function(s) ---------------------------------------------------------------
 
-
-
 def ai2pdf(slides_path, canvas_path, pdf_path, skip_empty=True):
     
     # Nested function(s) ------------------------------------------------------
@@ -32,33 +30,45 @@ def ai2pdf(slides_path, canvas_path, pdf_path, skip_empty=True):
         
         # Setup canvas
         c.setFont("Bahnschrift", size) # type & size
-        c.setFillColorRGB(color[0], color[1], color[2]) # color
-
+        c.setFillColorRGB(
+            color[0] / 255, color[1] / 255, color[2] / 255) # color
+        
         # Draw text
         if align == "left":
-            c.drawString(
-                x * mm, y * mm, text)
+            c.drawString(x * mm, y * mm, text)
         elif align == "center":
-            c.drawCentredString(
-                x * mm, y * mm, text)
+            c.drawCentredString(x * mm, y * mm, text)
         elif align == "right":
-            c.drawRightString(
-                x * mm, y * mm, text)
+            c.drawRightString(x * mm, y * mm, text)
         
     def get_canvas():
+        
+        # Define text & style 
+        title_01 = "Digital image processing"
+        title_02 = "Basic concepts"
+        title_02m = title_01 + " - " + title_02
+        title_03 = "Images are made of pixels"
+        title_cr = "© Benoit Dehapiot, 2024"
         
         # 
         canvas = fitz.open(Path("local", "canvas", "canvas.ai"))
         cPage = canvas.load_page(0)
         
         # 
+        
         text = Canvas("text.pdf", pagesize=(300 * mm, 200 * mm))
         draw_text(
-            text, "Title#1", 10, 176, size=36, color=(0, 0, 0), align="left")
+            text, title_03, 
+            10, 176, size=36, color=(0, 0, 0), align="left"
+            )
         draw_text(
-            text, "Title#2", 10, 100, size=26, color=(0, 0, 0), align="left")
+            text, title_02m, 
+            10, 8, size=14, color=(0, 0, 0), align="left"
+            )
         draw_text(
-            text, "Title#3", 10, 50, size=16, color=(0, 0, 0), align="left")
+            text, title_cr, 
+            282, 8, size=14, color=(218, 218, 218), align="right"
+            )
         text.save()
         
         text = fitz.open("text.pdf")

@@ -1,116 +1,113 @@
 #%% Imports -------------------------------------------------------------------
 
+import fitz
 from pathlib import Path
 
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-from reportlab.lib import colors
-from reportlab.lib.units import inch
+# reportlab
 from reportlab.lib.units import mm
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import landscape
-from reportlab.graphics import renderPDF
-
-from svglib.svglib import svg2rlg
-
-#%% Comments ------------------------------------------------------------------
-
-'''
-- Convert mm to points (1 mm = 2.83465 points)
-
-'''
-
-#%% Inputs --------------------------------------------------------------------
-
-name = "test.pdf"
-width, height = 300, 200
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.pdfbase.ttfonts import TTFont
 
 #%% Function(s) ---------------------------------------------------------------
 
-def create_canvas(name, width=300, height=200):
-    c = canvas.Canvas(name, pagesize=(width * mm, height * mm))
-    return c
 
-def add_text(
-        c, text="text", 
-        x=10, y=10, 
-        font="Helvetica",
-        size=20,
-        color=(0, 0, 0),
-        align="left",
-        ):
-        
-    # Setup font
-    c.setFont(f"{font}", size) # font type & size
-    c.setFillColorRGB(color[0], color[1], color[2]) # font color
-        
-    # Draw text
-    if align == "left":
-        c.drawString(
-            x * mm, y * mm, text)
-    elif align == "center":
-        c.drawCentredString(
-            x * mm, y * mm, text)
-    elif align == "right":
-        c.drawRightString(
-            x * mm, y * mm, text)
-        
-def add_image(
-    c, image_path, 
-    x=10, y=10, 
-    width=None, height=None, 
-    preserve_aspect_ratio=True, 
-    mask="auto",
-    ):
+
+def ai2pdf(slides_path, canvas_path, pdf_path, skip_empty=True):
     
-    if width and height and preserve_aspect_ratio:
-        c.drawImage(
-            image_path, 
-            x * mm, y * mm, 
-            width=width * mm, 
-            height=height * mm, 
-            preserveAspectRatio=True, 
-            mask=mask,
+    # Nested function(s) ------------------------------------------------------
+    
+    def is_empty(page):
+        if page.get_text("text").strip() != "":
+            return False  # Page contains text
+        if len(page.get_images(full=True)) > 0:
+            return False  # Page contains images
+        return True
+    
+    def draw_text(c, text, x, y, size=12, color=(0, 0, 0), align="left"):
+        
+        # Bahnschrift font
+        font_path = Path("C:/Windows/Fonts/Bahnschrift.ttf")
+        pdfmetrics.registerFont(TTFont("Bahnschrift", str(font_path)))
+        
+        # Setup canvas
+        c.setFont("Bahnschrift", size) # type & size
+        c.setFillColorRGB(color[0], color[1], color[2]) # color
+
+        # Draw text
+        if align == "left":
+            c.drawString(
+                x * mm, y * mm, text)
+        elif align == "center":
+            c.drawCentredString(
+                x * mm, y * mm, text)
+        elif align == "right":
+            c.drawRightString(
+                x * mm, y * mm, text)
+        
+    def get_canvas():
+        
+        # 
+        canvas = fitz.open(Path("local", "canvas", "canvas.ai"))
+        cPage = canvas.load_page(0)
+        
+        # 
+        text = Canvas("text.pdf", pagesize=(300 * mm, 200 * mm))
+        draw_text(
+            text, "Title#1", 10, 176, size=36, color=(0, 0, 0), align="left")
+        draw_text(
+            text, "Title#2", 10, 100, size=26, color=(0, 0, 0), align="left")
+        draw_text(
+            text, "Title#3", 10, 50, size=16, color=(0, 0, 0), align="left")
+        text.save()
+        
+        text = fitz.open("text.pdf")
+        tPage = text.load_page(0)
+                
+        return canvas, text, cPage, tPage
+    
+    # Execute -----------------------------------------------------------------
+
+    # Create PDF
+    pdf = fitz.open()
+    
+    # Get canvas
+    canvas, text, cPage, tPage = get_canvas()
+
+    # Read Adobe Illustrator slides
+    slides = fitz.open(slides_path)
+    for page_num in range(len(slides)):
+        sPage = slides.load_page(page_num)
+        if skip_empty and is_empty(sPage):
+            continue
+        new_page = pdf.new_page(
+            width=sPage.rect.width,
+            height=sPage.rect.height
             )
-    else:
-        c.drawImage(
-            image_path, 
-            x * mm, y * mm, 
-            width=width * mm if width else None, 
-            height=height * mm if height else None, 
-            mask=mask,
-            )
-        
-def add_svg(
-        c, svg_path, 
-        x=10, y=10, 
-        width=None, height=None,
-        ):
-    
-    # Convert SVG to ReportLab's drawing object
-    drawing = svg2rlg(svg_path)
-    
-    # Scale the drawing to the desired width and height
-    if width and height:
-        scale_x = width / drawing.width
-        scale_y = height / drawing.height
-        drawing.width = width
-        drawing.height = height
-        drawing.scale(scale_x, scale_y)
-    
-    # Translate to the specified (x, y) coordinates
-    renderPDF.draw(drawing, c, x * mm, y * mm)
-        
-def save_pdf(c):
-    c.showPage()
-    c.save()
+        new_page.show_pdf_page(cPage.rect, canvas, 0)
+        new_page.show_pdf_page(tPage.rect, text, 0)
+        new_page.show_pdf_page(sPage.rect, slides, page_num)
+
+    # Save PDF
+    if len(pdf) > 0:
+        pdf.save(pdf_path)
+
+    pdf.close()
+    canvas.close()
+    slides.close()
 
 #%% Execute -------------------------------------------------------------------
 
 if __name__ == "__main__":
-    c = create_canvas(name, width=width, height=height)
-    # add_text(c, text="text", x=10, y=10)
-    # add_image(c, Path.cwd() / "img.jpg", x=50, y=50, width=100, height=100)
-    add_svg(c, Path.cwd() / "test.svg")
-    save_pdf(c)
+    
+    # Inputs
+    slides_name = "DIP_1.1_Basic-Concepts_Pixels"
+    slides_path = Path("local", slides_name, slides_name + ".ai")
+    canvas_path = Path("local", "canvas", "canvas.ai")
+    pdf_path = "test.pdf"
+    
+    # Assemble
+    ai2pdf(slides_path, canvas_path, pdf_path)
+    
+#%%
+

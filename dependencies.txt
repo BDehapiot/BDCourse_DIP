@@ -1,2 +1,3 @@
 conda install reportlab
 conda install svglib
+pip install --upgrade pymupdf

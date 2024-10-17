@@ -1,5 +1,6 @@
 #%% Imports -------------------------------------------------------------------
 
+import os
 import fitz
 from pathlib import Path
 
@@ -104,7 +105,10 @@ def ai2pdf(slides_path, canvas_path, pdf_path, skip_empty=True):
 
     pdf.close()
     canvas.close()
+    text.close()
     slides.close()
+    
+    os.remove("text.pdf")
 
 #%% Execute -------------------------------------------------------------------
 

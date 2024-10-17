@@ -20,6 +20,7 @@ dependencies:
   - napari
   - pyqt
   - spyder
+  - reportlab
   # conda_tf_gpu
   - cudatoolkit=11.2
   - cudnn=8.1
@@ -27,6 +28,7 @@ dependencies:
     # pip_core
     - bd-tools==0.2.1
     # pip_spec
+    - pymupdf
     # pip_tf_gpu
     - albumentations
     - segmentation-models

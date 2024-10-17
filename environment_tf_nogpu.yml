@@ -20,11 +20,13 @@ dependencies:
   - napari
   - pyqt
   - spyder
+  - reportlab
   # conda_tf_nogpu
   - pip:
     # pip_core
     - bd-tools==0.2.1
     # pip_spec
+    - pymupdf
     # pip_tf_nogpu
     - albumentations
     - segmentation-models

@@ -48,20 +48,15 @@ def ai2pdf(slides_path, canvas_path, pdf_path, skip_empty=True):
         title_01 = "Digital image processing"
         title_02 = "Basic concepts"
         title_02m = title_01 + " - " + title_02
-        title_03 = "Images are made of pixels"
         title_cr = "© Benoit Dehapiot, 2024"
         
         # 
-        canvas = fitz.open(Path("local", "canvas", "canvas.ai"))
+        canvas = fitz.open(Path("local", "0-canvas", "canvas.ai"))
         cPage = canvas.load_page(0)
         
         # 
         
         text = Canvas("text.pdf", pagesize=(300 * mm, 200 * mm))
-        draw_text(
-            text, title_03, 
-            10, 176, size=36, color=(0, 0, 0), align="left"
-            )
         draw_text(
             text, title_02m, 
             10, 8, size=14, color=(0, 0, 0), align="left"
@@ -90,7 +85,7 @@ def ai2pdf(slides_path, canvas_path, pdf_path, skip_empty=True):
     for page_num in range(len(slides)):
         sPage = slides.load_page(page_num)
         if skip_empty and is_empty(sPage):
-            continue
+            break
         new_page = pdf.new_page(
             width=sPage.rect.width,
             height=sPage.rect.height
@@ -115,9 +110,9 @@ def ai2pdf(slides_path, canvas_path, pdf_path, skip_empty=True):
 if __name__ == "__main__":
     
     # Inputs
-    slides_name = "DIP_1.1_Basic-Concepts_Pixels"
-    slides_path = Path("local", slides_name, slides_name + ".ai")
-    canvas_path = Path("local", "canvas", "canvas.ai")
+    slides_name = "DIP_1.1_Pixels"
+    slides_path = Path("local", slides_name, "slides.ai")
+    canvas_path = Path("local", "0-canvas", "canvas.ai")
     pdf_path = "test.pdf"
     
     # Assemble
